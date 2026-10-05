@@ -1,0 +1,6 @@
+<% 
+const s = (status || 'Pending').toLowerCase();
+let cls = 'badge-status-pending';
+if (s === 'completed' || s === 'done') cls = 'badge-status-completed';
+else if (s === 'in progress' || s === 'in-progress' || s === 'active') cls = 'badge-status-active';
+%><span class="status-badge <%= cls %>"><%= status || 'Pending' %></span>

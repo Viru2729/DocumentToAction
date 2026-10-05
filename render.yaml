@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: document-to-action
+    runtime: node
+    buildCommand: npm install
+    startCommand: node app.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false
+      - key: AZURE_OPENAI_API_KEY
+        sync: false
+      - key: TEXT_MODEL_DEPLOYMENT
+        value: gpt-4.1-mini
+      - key: VISION_MODEL_DEPLOYMENT
+        value: gpt-4.1-mini
+      - key: DB_PATH
+        value: /opt/render/project/src/data

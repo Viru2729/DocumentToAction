@@ -1,0 +1,69 @@
+<% layout('layouts/main') %>
+
+<main class="documents-page">
+    <div class="documents-container">
+        <div class="page-header">
+            <h1>Document History</h1>
+            <a href="/" class="btn-primary">+ New Document</a>
+        </div>
+
+        <% if (documents && documents.length > 0) { %>
+        <div class="documents-grid">
+            <% documents.forEach(function(doc) { %>
+            <% var ext = (doc.fileType || '.txt').replace('.', '').toUpperCase(); %>
+            <% var statusLabel = doc.processingStatus || 'pending'; %>
+            <div class="document-card" data-doc-id="<%= doc._id %>">
+                <div class="doc-card-header">
+                    <div class="doc-type-icon doc-type-<%= (doc.fileType || '.txt').replace('.', '') %>"><%= ext %></div>
+                    <span class="doc-status-badge status-<%= statusLabel %>"><%= statusLabel %></span>
+                </div>
+                <div class="doc-card-body">
+                    <h3 class="doc-card-title" title="<%= doc.originalName %>"><%= doc.originalName.length > 40 ? doc.originalName.substring(0, 37) + '...' : doc.originalName %></h3>
+                    <div class="doc-card-meta">
+                        <span><%= (doc.fileSize / 1024).toFixed(1) %> KB</span>
+                        <span>·</span>
+                        <span><%= new Date(doc.uploadDate || doc.createdAt).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) %></span>
+                    </div>
+                </div>
+                <div class="doc-card-actions">
+                    <% if (doc.processingStatus === 'completed') { %>
+                        <a href="/documents/<%= doc._id %>/dashboard" class="btn-card-primary">View Dashboard →</a>
+                    <% } else if (doc.processingStatus === 'failed') { %>
+                        <a href="/documents/<%= doc._id %>" class="btn-card-secondary">View Details</a>
+                    <% } else { %>
+                        <a href="/documents/<%= doc._id %>/processing" class="btn-card-secondary">Check Status</a>
+                    <% } %>
+                    <button class="btn-card-delete" onclick="deleteDoc('<%= doc._id %>', this)" title="Delete document">🗑</button>
+                </div>
+            </div>
+            <% }) %>
+        </div>
+        <% } else { %>
+        <div class="empty-state-full">
+            <div class="empty-icon-lg">📂</div>
+            <h3>No documents yet</h3>
+            <p>Upload your first document to get started.</p>
+            <a href="/" class="btn-primary">Upload Document</a>
+        </div>
+        <% } %>
+    </div>
+</main>
+
+<script>
+function deleteDoc(docId, btn) {
+    if (!confirm('Delete this document and all its extracted tasks?')) return;
+    fetch('/documents/' + docId, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                var card = btn.closest('.document-card');
+                if (card) card.remove();
+                var grid = document.querySelector('.documents-grid');
+                if (grid && grid.children.length === 0) location.reload();
+            } else {
+                alert('Failed to delete document.');
+            }
+        })
+        .catch(function() { alert('An error occurred.'); });
+}
+</script>

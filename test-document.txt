@@ -1,0 +1,54 @@
+PROJECT KICKOFF NOTICE - ANNUAL REPORT SYSTEM
+
+Date: October 1, 2026
+Prepared by: Priya Sharma, Project Manager
+Department: Technology Division
+
+SUBJECT: New Annual Report Automation System - Project Requirements and Action Items
+
+Overview:
+The Technology Division has been tasked with building a new Annual Report Automation System by the Board of Directors. The project has a firm deadline of December 15, 2026 for the first working prototype and full deployment by January 31, 2027.
+
+TASKS AND RESPONSIBILITIES:
+
+1. Requirements Gathering
+Ravi Kumar (Business Analyst) must complete stakeholder interviews and document all functional requirements by October 20, 2026. The requirements document must be submitted to Priya Sharma for review.
+
+2. Database Schema Design
+The database team led by Meena Patel must finalize the schema design by October 28, 2026. This task depends on the completion of requirements gathering. The team must submit the design document for peer review.
+
+3. UI/UX Design
+Sarah Thompson (UX Designer) must complete wireframes and mockups by November 5, 2026. All designs must be approved by the stakeholders before development begins. Failure to get approval on time will delay the entire development phase.
+
+4. Backend API Development
+The backend team (Dev Team A) must complete all REST APIs by November 30, 2026. This work depends on the database schema being finalized. Each API endpoint must be documented using Swagger.
+
+5. Frontend Development
+Dev Team B must complete the frontend integration with the backend APIs by December 10, 2026. This task depends on backend API completion and UI/UX approval.
+
+6. Testing and Quality Assurance
+The QA team led by James Wilson must complete all testing by December 13, 2026. All critical bugs must be fixed before the December 15 prototype deadline. Testing must include unit tests, integration tests, and user acceptance testing.
+
+7. Stakeholder Presentation
+Priya Sharma must conduct a project status presentation to the Board of Directors every Monday at 10:00 AM starting October 7, 2026.
+
+8. Project Documentation
+All teams must submit weekly progress reports every Friday by 5:00 PM. Reports must be sent to priya.sharma@company.com.
+
+IMPORTANT EVENTS:
+- Project Kickoff Meeting: October 5, 2026 at 9:00 AM, Conference Room B
+- Mid-Project Review: November 15, 2026 at 2:00 PM
+- Final Prototype Demo: December 15, 2026
+
+MILESTONES:
+- Requirements Approved: October 22, 2026
+- Design Approved: November 7, 2026
+- APIs Complete: November 30, 2026
+- Full Integration: December 10, 2026
+- Go-Live: January 31, 2027
+
+RISKS:
+If the prototype is not ready by December 15, the Board of Directors may withdraw funding for the project. The QA phase cannot be compressed further.
+
+Contact: priya.sharma@company.com | +91-98765-43210
+Emergency contact: james.wilson@company.com

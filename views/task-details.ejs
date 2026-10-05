@@ -1,0 +1,209 @@
+<% layout('layouts/main') %>
+
+<main class="task-details-page">
+    <div class="task-details-container">
+        <div class="breadcrumb">
+            <a href="/documents">Documents</a>
+            <span>›</span>
+            <% var docId = task.documentId && task.documentId._id ? task.documentId._id : task.documentId; %>
+            <a href="/documents/<%= docId %>/dashboard">Dashboard</a>
+            <span>›</span>
+            <span><%= task.title %></span>
+        </div>
+
+        <div class="task-details-header">
+            <div class="task-header-meta">
+                <% var priorityClasses = { Critical: 'badge-critical', High: 'badge-high', Medium: 'badge-medium', Low: 'badge-low' }; %>
+                <% var priorityCls = priorityClasses[task.priority] || 'badge-medium'; %>
+                <span class="priority-badge <%= priorityCls %>">
+                    <%= task.priority || 'Medium' %><% if (task.priorityInferred) { %> <span class="inferred-tag">~</span><% } %>
+                </span>
+                <% var statusStr = (task.status || 'Pending').toLowerCase(); %>
+                <% var statusCls = statusStr === 'completed' || statusStr === 'done' ? 'badge-status-completed' : (statusStr === 'in progress' || statusStr === 'active' ? 'badge-status-active' : 'badge-status-pending'); %>
+                <span class="status-badge <%= statusCls %>"><%= task.status || 'Pending' %></span>
+                <% if (task.taskId) { %><span class="task-id-badge"><%= task.taskId %></span><% } %>
+                <% if (task.isRecurring) { %><span class="badge-recurring">↺ Recurring</span><% } %>
+            </div>
+            <h1 class="task-details-title"><%= task.title %></h1>
+            <% if (task.description) { %><p class="task-details-desc"><%= task.description %></p><% } %>
+        </div>
+
+        <div class="task-details-grid">
+
+            <% var hasTimingInfo = task.deadline || task.startDate || task.time || task.duration || task.estimatedEffort || (task.isRecurring && task.recurrencePattern); %>
+            <% if (hasTimingInfo) { %>
+            <div class="detail-card">
+                <h3>Timing</h3>
+                <div class="detail-fields">
+                    <% if (task.deadline) { %>
+                    <% var isOverdue = task.deadlineResolved && new Date(task.deadlineResolved) < new Date(); %>
+                    <div class="detail-field">
+                        <label>Deadline</label>
+                        <span class="<%= isOverdue ? 'overdue-text' : '' %>">
+                            <%= task.deadline %>
+                            <% if (task.deadlineAmbiguous) { %><span class="ambiguous-tag">~approximate</span><% } %>
+                            <% if (isOverdue) { %> <span class="overdue-badge">OVERDUE</span><% } %>
+                        </span>
+                    </div>
+                    <% } %>
+                    <% if (task.startDate) { %>
+                    <div class="detail-field">
+                        <label>Start Date</label>
+                        <span><%= task.startDate %><% if (task.startDateAmbiguous) { %> <span class="ambiguous-tag">~</span><% } %></span>
+                    </div>
+                    <% } %>
+                    <% if (task.time) { %>
+                    <div class="detail-field">
+                        <label>Time</label>
+                        <span><%= task.time %></span>
+                    </div>
+                    <% } %>
+                    <% if (task.duration) { %>
+                    <div class="detail-field">
+                        <label>Duration</label>
+                        <span><%= task.duration %></span>
+                    </div>
+                    <% } %>
+                    <% if (task.estimatedEffort) { %>
+                    <div class="detail-field">
+                        <label>Estimated Effort</label>
+                        <span><%= task.estimatedEffort %></span>
+                    </div>
+                    <% } %>
+                    <% if (task.isRecurring && task.recurrencePattern) { %>
+                    <div class="detail-field">
+                        <label>Recurrence</label>
+                        <span><%= task.recurrencePattern %></span>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+            <% } %>
+
+            <% var hasResponsibilityInfo = task.responsiblePerson || task.department || task.contactPerson || task.location; %>
+            <% if (hasResponsibilityInfo) { %>
+            <div class="detail-card">
+                <h3>Responsibility</h3>
+                <div class="detail-fields">
+                    <% if (task.responsiblePerson) { %>
+                    <div class="detail-field">
+                        <label>Responsible</label>
+                        <span><%= task.responsiblePerson %></span>
+                    </div>
+                    <% } %>
+                    <% if (task.department) { %>
+                    <div class="detail-field">
+                        <label>Department / Team</label>
+                        <span><%= task.department %></span>
+                    </div>
+                    <% } %>
+                    <% if (task.contactPerson) { %>
+                    <div class="detail-field">
+                        <label>Contact Person</label>
+                        <span><%= task.contactPerson %></span>
+                    </div>
+                    <% } %>
+                    <% if (task.location) { %>
+                    <div class="detail-field">
+                        <label>Location</label>
+                        <span><%= task.location %></span>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+            <% } %>
+
+            <% if (task.deliverables && task.deliverables.length > 0) { %>
+            <div class="detail-card">
+                <h3>Deliverables</h3>
+                <ul class="detail-list">
+                    <% task.deliverables.forEach(function(d) { %><li><%= d %></li><% }) %>
+                </ul>
+            </div>
+            <% } %>
+
+            <% if (task.instructions && task.instructions.length > 0) { %>
+            <div class="detail-card">
+                <h3>Instructions</h3>
+                <ol class="detail-list detail-ol">
+                    <% task.instructions.forEach(function(i) { %><li><%= i %></li><% }) %>
+                </ol>
+            </div>
+            <% } %>
+
+            <% if ((task.dependencies && task.dependencies.length > 0) || (task.prerequisites && task.prerequisites.length > 0)) { %>
+            <div class="detail-card">
+                <h3>Dependencies & Prerequisites</h3>
+                <% if (task.dependencies && task.dependencies.length > 0) { %>
+                <p class="detail-section-label">Dependencies</p>
+                <ul class="detail-list">
+                    <% task.dependencies.forEach(function(d) { %><li><%= d %></li><% }) %>
+                </ul>
+                <% } %>
+                <% if (task.prerequisites && task.prerequisites.length > 0) { %>
+                <p class="detail-section-label">Prerequisites</p>
+                <ul class="detail-list">
+                    <% task.prerequisites.forEach(function(p) { %><li><%= p %></li><% }) %>
+                </ul>
+                <% } %>
+            </div>
+            <% } %>
+
+            <% if (task.resources && task.resources.length > 0) { %>
+            <div class="detail-card">
+                <h3>Required Resources</h3>
+                <ul class="detail-list">
+                    <% task.resources.forEach(function(r) { %><li><%= r %></li><% }) %>
+                </ul>
+            </div>
+            <% } %>
+
+            <% if (task.risks && task.risks.length > 0) { %>
+            <div class="detail-card">
+                <h3>Risks</h3>
+                <ul class="detail-list detail-risks">
+                    <% task.risks.forEach(function(r) { %><li><%= r %></li><% }) %>
+                </ul>
+            </div>
+            <% } %>
+
+            <% if (task.consequences) { %>
+            <div class="detail-card">
+                <h3>Consequences of Missing Deadline</h3>
+                <p class="consequences-text"><%= task.consequences %></p>
+            </div>
+            <% } %>
+
+            <% if (task.constraints && task.constraints.length > 0) { %>
+            <div class="detail-card">
+                <h3>Constraints</h3>
+                <ul class="detail-list">
+                    <% task.constraints.forEach(function(c) { %><li><%= c %></li><% }) %>
+                </ul>
+            </div>
+            <% } %>
+
+            <% if (task.relatedTasks && task.relatedTasks.length > 0) { %>
+            <div class="detail-card">
+                <h3>Related Tasks</h3>
+                <ul class="detail-list">
+                    <% task.relatedTasks.forEach(function(r) { %><li><%= r %></li><% }) %>
+                </ul>
+            </div>
+            <% } %>
+
+            <% if (task.sourceText) { %>
+            <div class="detail-card source-card">
+                <h3>📄 Extracted From Document</h3>
+                <blockquote class="source-quote"><%= task.sourceText %></blockquote>
+            </div>
+            <% } %>
+
+        </div>
+
+        <div class="task-details-actions">
+            <a href="/documents/<%= docId %>/dashboard" class="btn-primary">← Back to Dashboard</a>
+            <a href="/documents/<%= docId %>" class="btn-secondary">Document Details</a>
+        </div>
+    </div>
+</main>

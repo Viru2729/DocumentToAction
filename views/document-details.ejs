@@ -1,0 +1,61 @@
+<% layout('layouts/main') %>
+
+<main class="document-details-page">
+    <div class="document-details-container">
+        <div class="breadcrumb">
+            <a href="/documents">Documents</a>
+            <span>›</span>
+            <span><%= document.originalName %></span>
+        </div>
+
+        <div class="doc-details-header">
+            <div class="doc-type-icon doc-type-<%= (document.fileType || '.txt').replace('.', '') %> large">
+                <%= (document.fileType || '.txt').replace('.', '').toUpperCase() %>
+            </div>
+            <div class="doc-details-info">
+                <h1><%= document.originalName %></h1>
+                <div class="doc-details-meta">
+                    <span>Size: <%= (document.fileSize / 1024).toFixed(1) %> KB</span>
+                    <span>·</span>
+                    <span>Uploaded: <%= new Date(document.uploadDate || document.createdAt).toLocaleString() %></span>
+                    <span>·</span>
+                    <span class="doc-status-badge status-<%= document.processingStatus || 'pending' %>"><%= document.processingStatus || 'pending' %></span>
+                </div>
+            </div>
+        </div>
+
+        <% if (document.processingError) { %>
+        <div class="error-box">
+            <strong>Processing Error:</strong> <%= document.processingError %>
+            <% if (document.isPossiblyScanned) { %>
+                <p style="margin-top:8px;">This document may be scanned or image-based. Text extraction from scanned PDFs requires OCR capability.</p>
+            <% } %>
+        </div>
+        <% } %>
+
+        <% if (analysis) { %>
+        <div class="doc-analysis-summary">
+            <div class="analysis-stat"><span class="stat-num"><%= analysis.taskCount || 0 %></span><span>Tasks</span></div>
+            <div class="analysis-stat"><span class="stat-num"><%= analysis.milestones ? analysis.milestones.length : 0 %></span><span>Milestones</span></div>
+            <div class="analysis-stat"><span class="stat-num"><%= analysis.events ? analysis.events.length : 0 %></span><span>Events</span></div>
+            <div class="analysis-stat"><span class="stat-num"><%= analysis.chunksProcessed || 1 %></span><span>Chunks</span></div>
+        </div>
+        <a href="/documents/<%= document._id %>/dashboard" class="btn-primary btn-full">Open Full Dashboard →</a>
+        <% } else if (document.processingStatus === 'pending' || document.processingStatus === 'extracting' || document.processingStatus === 'analyzing') { %>
+        <div class="info-box">
+            <p>Document is currently being processed.</p>
+            <a href="/documents/<%= document._id %>/processing" class="btn-primary" style="margin-top:12px;display:inline-block;">Check Status →</a>
+        </div>
+        <% } %>
+
+        <% if (document.extractedText) { %>
+        <div class="section-card" style="margin-top:24px;">
+            <div class="section-card-header">
+                <h2>Extracted Text</h2>
+                <span class="text-length-badge"><%= document.extractedTextLength ? document.extractedTextLength.toLocaleString() : '' %> chars</span>
+            </div>
+            <div class="extracted-text-box"><%= document.extractedText.substring(0, 3000) %><% if (document.extractedText.length > 3000) { %><div class="text-truncate-note">... [showing first 3,000 of <%= document.extractedText.length.toLocaleString() %> characters]</div><% } %></div>
+        </div>
+        <% } %>
+    </div>
+</main>

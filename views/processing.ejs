@@ -1,0 +1,159 @@
+<% layout('layouts/main') %>
+
+<main class="processing-page">
+    <div class="processing-container">
+        <div class="processing-card">
+            <div class="processing-header">
+                <div class="processing-spinner">
+                    <div class="spinner-ring"></div>
+                </div>
+                <h2 class="processing-title" id="processingTitle">Preparing Analysis</h2>
+                <p class="processing-subtitle">Please wait while we process your document.</p>
+            </div>
+
+            <div class="doc-info-bar">
+                <div class="doc-info-item">
+                    <span class="doc-info-label">File</span>
+                    <span class="doc-info-value"><%= document.originalName %></span>
+                </div>
+                <div class="doc-info-item">
+                    <span class="doc-info-label">Size</span>
+                    <span class="doc-info-value"><%= (document.fileSize / 1024).toFixed(1) %> KB</span>
+                </div>
+                <div class="doc-info-item">
+                    <span class="doc-info-label">Type</span>
+                    <span class="doc-info-value doc-type-badge"><%= document.fileType.replace('.', '').toUpperCase() %></span>
+                </div>
+            </div>
+
+            <div class="pipeline-steps">
+                <div class="pipeline-step" id="step-upload" data-step="upload">
+                    <div class="step-indicator done">✓</div>
+                    <div class="step-content">
+                        <span class="step-label">Document Uploaded</span>
+                    </div>
+                </div>
+                <div class="pipeline-step" id="step-extract" data-step="extract">
+                    <div class="step-indicator pending">○</div>
+                    <div class="step-content">
+                        <span class="step-label">Extracting Text</span>
+                    </div>
+                </div>
+                <div class="pipeline-step" id="step-ai" data-step="ai">
+                    <div class="step-indicator pending">○</div>
+                    <div class="step-content">
+                        <span class="step-label">AI Document Analysis</span>
+                    </div>
+                </div>
+                <div class="pipeline-step" id="step-structure" data-step="structure">
+                    <div class="step-indicator pending">○</div>
+                    <div class="step-content">
+                        <span class="step-label">Structuring Tasks & Timeline</span>
+                    </div>
+                </div>
+                <div class="pipeline-step" id="step-save" data-step="save">
+                    <div class="step-indicator pending">○</div>
+                    <div class="step-content">
+                        <span class="step-label">Saving Results</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="processing-error" id="processingError" style="display:none;">
+                <div class="error-icon">⚠</div>
+                <p class="error-msg" id="errorMsg"></p>
+                <div class="error-actions">
+                    <a href="/" class="btn-secondary">Upload Another Document</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    (function() {
+        const docId = '<%= document._id %>';
+        const steps = ['extract', 'ai', 'structure', 'save'];
+        let currentStep = 0;
+        let analysisStarted = false;
+
+        const titleEl = document.getElementById('processingTitle');
+        const errorSection = document.getElementById('processingError');
+        const errorMsg = document.getElementById('errorMsg');
+
+        const setStepActive = (stepName) => {
+            const el = document.getElementById('step-' + stepName);
+            if (!el) return;
+            el.querySelector('.step-indicator').className = 'step-indicator active';
+            el.querySelector('.step-indicator').textContent = '…';
+        };
+
+        const setStepDone = (stepName) => {
+            const el = document.getElementById('step-' + stepName);
+            if (!el) return;
+            el.querySelector('.step-indicator').className = 'step-indicator done';
+            el.querySelector('.step-indicator').textContent = '✓';
+        };
+
+        const showError = (msg) => {
+            titleEl.textContent = 'Processing Failed';
+            errorSection.style.display = 'flex';
+            errorMsg.textContent = msg || 'An unexpected error occurred while processing your document.';
+        };
+
+        const startAnalysis = async () => {
+            if (analysisStarted) return;
+            analysisStarted = true;
+
+            setStepActive('extract');
+            titleEl.textContent = 'Extracting Text';
+
+            try {
+                const res = await fetch('/documents/' + docId + '/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                const data = await res.json();
+                if (!data.success) {
+                    showError(data.error || 'Failed to start analysis.');
+                    return;
+                }
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                    return;
+                }
+                pollStatus();
+            } catch (e) {
+                showError('Network error. Please try again.');
+            }
+        };
+
+        const pollStatus = () => {
+            const interval = setInterval(async () => {
+                try {
+                    const res = await fetch('/documents/' + docId + '/status');
+                    const data = await res.json();
+
+                    if (data.status === 'extracting') {
+                        setStepActive('extract');
+                        titleEl.textContent = 'Extracting Text';
+                    } else if (data.status === 'analyzing') {
+                        setStepDone('extract');
+                        setStepActive('ai');
+                        titleEl.textContent = 'AI Analyzing Document';
+                    } else if (data.status === 'completed') {
+                        clearInterval(interval);
+                        setStepDone('extract');
+                        setStepDone('ai');
+                        setStepDone('structure');
+                        setStepDone('save');
+                        titleEl.textContent = 'Analysis Complete!';
+                        setTimeout(() => { window.location.href = '/documents/' + docId + '/dashboard'; }, 1000);
+                    } else if (data.status === 'failed') {
+                        clearInterval(interval);
+                        showError(data.error || 'Document processing failed.');
+                    }
+                } catch(e) {}
+            }, 2000);
+        };
+
+        startAnalysis();
+    })();
+</script>

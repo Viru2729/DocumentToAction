@@ -1,0 +1,4 @@
+<% 
+const priorityClasses = { Critical: 'badge-critical', High: 'badge-high', Medium: 'badge-medium', Low: 'badge-low' };
+const cls = priorityClasses[priority] || 'badge-medium';
+%><span class="priority-badge <%= cls %>"><%= priority || 'Medium' %><% if (inferred) { %> <span class="inferred-tag" title="Priority inferred by AI">~</span><% } %></span>

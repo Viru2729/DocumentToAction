@@ -1,0 +1,13 @@
+<% layout('layouts/main') %>
+
+<main class="error-page">
+    <div class="error-container">
+        <div class="error-icon-lg">⚠</div>
+        <h1><%= typeof title !== 'undefined' ? title : 'Something went wrong' %></h1>
+        <p class="error-message"><%= typeof message !== 'undefined' ? message : 'An unexpected error occurred.' %></p>
+        <div class="error-actions">
+            <a href="/" class="btn-primary">Go Home</a>
+            <a href="/documents" class="btn-secondary">View Documents</a>
+        </div>
+    </div>
+</main>

@@ -1,0 +1,338 @@
+<% layout('layouts/main') %>
+
+<main class="dashboard-page">
+    <div class="dashboard-container">
+
+        <div class="dashboard-header">
+            <div class="dashboard-breadcrumb">
+                <a href="/documents">← All Documents</a>
+            </div>
+            <div class="dashboard-title-row">
+                <div>
+                    <h1 class="dashboard-doc-title"><%= analysis && analysis.documentTitle ? analysis.documentTitle : document.originalName %></h1>
+                    <div class="dashboard-meta">
+                        <% if (analysis && analysis.documentType) { %>
+                            <span class="meta-tag type"><%= analysis.documentType %></span>
+                        <% } %>
+                        <span class="meta-tag">Uploaded <%= new Date(document.uploadDate).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) %></span>
+                        <span class="meta-tag status completed">Analysis Complete</span>
+                    </div>
+                </div>
+                <a href="/documents/<%= document._id %>" class="btn-outline-sm">View Document</a>
+            </div>
+            <% if (analysis && analysis.summary) { %>
+            <div class="dashboard-summary-box">
+                <p><%= analysis.summary %></p>
+            </div>
+            <% } %>
+            <% if (analysis && analysis.objective) { %>
+            <div class="dashboard-objective">
+                <strong>Objective:</strong> <%= analysis.objective %>
+            </div>
+            <% } %>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card stat-total">
+                <div class="stat-number"><%= stats.total %></div>
+                <div class="stat-label">Total Tasks</div>
+            </div>
+            <div class="stat-card stat-critical">
+                <div class="stat-number"><%= stats.critical %></div>
+                <div class="stat-label">Critical</div>
+            </div>
+            <div class="stat-card stat-high">
+                <div class="stat-number"><%= stats.high %></div>
+                <div class="stat-label">High Priority</div>
+            </div>
+            <div class="stat-card stat-upcoming">
+                <div class="stat-number"><%= stats.upcoming %></div>
+                <div class="stat-label">Due This Week</div>
+            </div>
+            <div class="stat-card stat-overdue">
+                <div class="stat-number"><%= stats.overdue %></div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+
+        <% if (overdue && overdue.length > 0) { %>
+        <div class="alert-banner alert-overdue">
+            <span class="alert-icon">⚠</span>
+            <strong><%= overdue.length %> overdue task<%= overdue.length !== 1 ? 's' : '' %>:</strong>
+            <span><%= overdue.map(t => t.title).join(', ') %></span>
+        </div>
+        <% } %>
+
+        <% if (upcoming && upcoming.length > 0) { %>
+        <div class="alert-banner alert-upcoming">
+            <span class="alert-icon">🔔</span>
+            <strong><%= upcoming.length %> task<%= upcoming.length !== 1 ? 's' : '' %> due this week.</strong>
+        </div>
+        <% } %>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-main">
+
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2>Tasks</h2>
+                        <div class="table-controls">
+                            <select id="filterPriority" class="filter-select">
+                                <option value="">All Priorities</option>
+                                <option value="Critical">Critical</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            <select id="filterStatus" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                            <select id="sortBy" class="filter-select">
+                                <option value="deadline">Sort: Deadline</option>
+                                <option value="priority">Sort: Priority</option>
+                                <option value="status">Sort: Status</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <% if (tasks && tasks.length > 0) { %>
+                    <div class="table-wrapper">
+                        <table class="task-table" id="taskTable">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Responsible</th>
+                                    <th>Priority</th>
+                                    <th>Deadline</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% tasks.forEach(function(task) { %>
+                                <% var priorityClasses = { Critical: 'badge-critical', High: 'badge-high', Medium: 'badge-medium', Low: 'badge-low' }; %>
+                                <% var priorityCls = priorityClasses[task.priority] || 'badge-medium'; %>
+                                <% var statusStr = (task.status || 'Pending').toLowerCase(); %>
+                                <% var statusCls = statusStr === 'completed' || statusStr === 'done' ? 'badge-status-completed' : (statusStr === 'in progress' || statusStr === 'active' ? 'badge-status-active' : 'badge-status-pending'); %>
+                                <% var isOverdue = task.deadlineResolved && new Date(task.deadlineResolved) < new Date(); %>
+                                <tr class="task-row" data-priority="<%= task.priority %>" data-status="<%= task.status || 'Pending' %>" data-deadline="<%= task.deadlineResolved ? new Date(task.deadlineResolved).toISOString() : '' %>">
+                                    <td>
+                                        <div class="task-title-cell">
+                                            <span class="task-name"><%= task.title %></span>
+                                            <% if (task.isRecurring) { %><span class="badge-recurring">↺ Recurring</span><% } %>
+                                        </div>
+                                        <% if (task.description) { %><div class="task-desc-preview"><%= task.description.length > 90 ? task.description.substring(0, 90) + '...' : task.description %></div><% } %>
+                                    </td>
+                                    <td><span class="person-cell"><%= task.responsiblePerson || '—' %></span></td>
+                                    <td>
+                                        <span class="priority-badge <%= priorityCls %>">
+                                            <%= task.priority || 'Medium' %><% if (task.priorityInferred) { %> <span class="inferred-tag" title="Priority inferred">~</span><% } %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if (task.deadline) { %>
+                                            <span class="deadline-cell <%= isOverdue ? 'overdue' : '' %>">
+                                                <%= task.deadline %>
+                                                <% if (task.deadlineAmbiguous) { %><span class="ambiguous-tag">~</span><% } %>
+                                            </span>
+                                        <% } else { %>
+                                            <span class="no-deadline">—</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge <%= statusCls %>"><%= task.status || 'Pending' %></span>
+                                    </td>
+                                    <td><a href="/documents/<%= document._id %>/tasks/<%= task._id %>" class="view-task-btn">View →</a></td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } else { %>
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <p>No actionable tasks were identified in this document.</p>
+                    </div>
+                    <% } %>
+                </div>
+
+                <% if (analysis && analysis.actionPlan && analysis.actionPlan.length > 0) { %>
+                <div class="section-card">
+                    <div class="section-card-header"><h2>Action Plan</h2></div>
+                    <div class="action-plan">
+                        <% analysis.actionPlan.forEach(function(step, idx) { %>
+                        <div class="action-plan-step">
+                            <div class="step-number"><%= step.step || (idx + 1) %></div>
+                            <div class="step-body">
+                                <h4><%= step.title %></h4>
+                                <% if (step.description) { %><p><%= step.description %></p><% } %>
+                                <% if (step.taskIds && step.taskIds.length > 0) { %>
+                                    <div class="step-task-ids">Tasks: <%= step.taskIds.join(', ') %></div>
+                                <% } %>
+                            </div>
+                        </div>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } %>
+
+                <% if (analysis && analysis.overallTimeline && analysis.overallTimeline.length > 0) { %>
+                <div class="section-card">
+                    <div class="section-card-header"><h2>Timeline</h2></div>
+                    <div class="timeline">
+                        <% analysis.overallTimeline.forEach(function(phase, idx) { %>
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h4><%= phase.phase || ('Phase ' + (idx + 1)) %></h4>
+                                <% if (phase.startDate || phase.endDate) { %>
+                                    <span class="timeline-dates"><%= phase.startDate || '' %><%= (phase.startDate && phase.endDate) ? ' → ' : '' %><%= phase.endDate || '' %></span>
+                                <% } %>
+                                <% if (phase.description) { %><p><%= phase.description %></p><% } %>
+                                <% if (phase.tasks && phase.tasks.length > 0) { %>
+                                    <ul class="timeline-tasks">
+                                        <% phase.tasks.forEach(function(t) { %><li><%= t %></li><% }) %>
+                                    </ul>
+                                <% } %>
+                            </div>
+                        </div>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } %>
+
+            </div>
+
+            <div class="dashboard-sidebar">
+
+                <% if (analysis && analysis.milestones && analysis.milestones.length > 0) { %>
+                <div class="sidebar-card">
+                    <h3>🏁 Milestones</h3>
+                    <ul class="sidebar-list">
+                        <% analysis.milestones.forEach(function(m) { %>
+                        <li class="sidebar-list-item">
+                            <strong><%= m.title %></strong>
+                            <% if (m.date) { %><span class="sidebar-date"><%= m.date %></span><% } %>
+                            <% if (m.description) { %><span class="sidebar-desc"><%= m.description %></span><% } %>
+                        </li>
+                        <% }) %>
+                    </ul>
+                </div>
+                <% } %>
+
+                <% if (analysis && analysis.events && analysis.events.length > 0) { %>
+                <div class="sidebar-card">
+                    <h3>📅 Events</h3>
+                    <ul class="sidebar-list">
+                        <% analysis.events.forEach(function(e) { %>
+                        <li class="sidebar-list-item">
+                            <strong><%= e.title %></strong>
+                            <% if (e.date) { %><span class="sidebar-date"><%= e.date %><%= e.time ? ' at ' + e.time : '' %></span><% } %>
+                            <% if (e.location) { %><span class="sidebar-desc">📍 <%= e.location %></span><% } %>
+                            <% if (e.description) { %><span class="sidebar-desc"><%= e.description %></span><% } %>
+                        </li>
+                        <% }) %>
+                    </ul>
+                </div>
+                <% } %>
+
+                <% if (analysis && analysis.importantDates && analysis.importantDates.length > 0) { %>
+                <div class="sidebar-card">
+                    <h3>🗓 Important Dates</h3>
+                    <ul class="sidebar-list">
+                        <% analysis.importantDates.forEach(function(d) { %>
+                        <li class="sidebar-list-item">
+                            <strong><%= d.label %></strong>
+                            <% if (d.date) { %><span class="sidebar-date"><%= d.date %></span><% } %>
+                            <% if (d.description) { %><span class="sidebar-desc"><%= d.description %></span><% } %>
+                        </li>
+                        <% }) %>
+                    </ul>
+                </div>
+                <% } %>
+
+                <% if (analysis && analysis.contacts && analysis.contacts.length > 0) { %>
+                <div class="sidebar-card">
+                    <h3>👤 Contacts</h3>
+                    <ul class="sidebar-list">
+                        <% analysis.contacts.forEach(function(c) { %>
+                        <li class="sidebar-list-item">
+                            <strong><%= c.name || 'Unknown' %></strong>
+                            <% if (c.role) { %><span class="sidebar-desc"><%= c.role %></span><% } %>
+                            <% if (c.department) { %><span class="sidebar-desc"><%= c.department %></span><% } %>
+                            <% if (c.email) { %><a href="mailto:<%= c.email %>" class="contact-link"><%= c.email %></a><% } %>
+                            <% if (c.phone) { %><span class="sidebar-desc">📞 <%= c.phone %></span><% } %>
+                        </li>
+                        <% }) %>
+                    </ul>
+                </div>
+                <% } %>
+
+                <% if (analysis && analysis.links && analysis.links.length > 0) { %>
+                <div class="sidebar-card">
+                    <h3>🔗 Links</h3>
+                    <ul class="sidebar-list">
+                        <% analysis.links.forEach(function(l) { %>
+                        <li><a href="<%= l %>" target="_blank" rel="noopener noreferrer" class="link-item"><%= l.length > 50 ? l.substring(0, 47) + '...' : l %></a></li>
+                        <% }) %>
+                    </ul>
+                </div>
+                <% } %>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+(function() {
+    var filterPriority = document.getElementById('filterPriority');
+    var filterStatus = document.getElementById('filterStatus');
+    var sortByEl = document.getElementById('sortBy');
+    var taskTable = document.getElementById('taskTable');
+    if (!taskTable) return;
+
+    var PRIORITY_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+    function applyFiltersAndSort() {
+        var pVal = filterPriority ? filterPriority.value : '';
+        var sVal = filterStatus ? filterStatus.value : '';
+        var sortVal = sortByEl ? sortByEl.value : 'deadline';
+        var tbody = taskTable.querySelector('tbody');
+        var rows = Array.from(tbody.querySelectorAll('tr.task-row'));
+
+        rows.forEach(function(row) {
+            var rp = row.dataset.priority || '';
+            var rs = row.dataset.status || '';
+            var matchP = !pVal || rp === pVal;
+            var matchS = !sVal || rs.toLowerCase().indexOf(sVal.toLowerCase()) !== -1;
+            row.classList.toggle('hidden', !(matchP && matchS));
+        });
+
+        var visible = rows.filter(function(r) { return !r.classList.contains('hidden'); });
+        visible.sort(function(a, b) {
+            if (sortVal === 'priority') {
+                return (PRIORITY_ORDER[a.dataset.priority] !== undefined ? PRIORITY_ORDER[a.dataset.priority] : 99) - (PRIORITY_ORDER[b.dataset.priority] !== undefined ? PRIORITY_ORDER[b.dataset.priority] : 99);
+            }
+            if (sortVal === 'deadline') {
+                var dA = a.dataset.deadline ? new Date(a.dataset.deadline) : null;
+                var dB = b.dataset.deadline ? new Date(b.dataset.deadline) : null;
+                if (!dA && !dB) return 0;
+                if (!dA) return 1;
+                if (!dB) return -1;
+                return dA - dB;
+            }
+            if (sortVal === 'status') return (a.dataset.status || '').localeCompare(b.dataset.status || '');
+            return 0;
+        });
+        visible.forEach(function(r) { tbody.appendChild(r); });
+    }
+
+    if (filterPriority) filterPriority.addEventListener('change', applyFiltersAndSort);
+    if (filterStatus) filterStatus.addEventListener('change', applyFiltersAndSort);
+    if (sortByEl) sortByEl.addEventListener('change', applyFiltersAndSort);
+})();
+</script>
